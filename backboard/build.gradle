@@ -1,0 +1,97 @@
+apply plugin: 'com.android.library'
+apply plugin: 'checkstyle'
+
+ext {
+    bintrayRepo = 'maven'
+    bintrayName = 'Backboard'
+
+    publishedGroupId = 'com.tumblr'
+    libraryName = 'Backboard'
+    artifact = 'backboard'
+
+    libraryDescription = 'A motion-driven animation framework for Android.'
+
+    siteUrl = 'https://github.com/tumblr/Backboard'
+    gitUrl = 'https://github.com/tumblr/Backboard.git'
+
+    libraryVersion = '0.1.2'
+
+    developerId = 'ericleong'
+    developerName = 'Eric Leong'
+    developerEmail = 'ericleong@tumblr.com'
+
+    licenseName = 'The Apache Software License, Version 2.0'
+    licenseUrl = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+    allLicenses = ["Apache-2.0"]
+}
+
+android {
+    compileSdkVersion rootProject.ext.compileSdkVersion
+    buildToolsVersion rootProject.ext.buildToolsVersion
+
+    defaultConfig {
+        minSdkVersion rootProject.ext.minSdkVersion
+        targetSdkVersion rootProject.ext.targetSdkVersion
+        versionCode 102
+        versionName "0.1.2"
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
+        }
+    }
+}
+
+dependencies {
+    provided rootProject.ext.facebookRebound
+    compile rootProject.ext.supportAnnotation
+
+    compile fileTree(dir: 'libs', include: ['*.jar'])
+}
+
+checkstyle {
+    toolVersion = "6.7"
+}
+
+task checkstyle(type: Checkstyle) {
+    configFile = rootProject.file('backboard/checkstyle.xml')
+
+    source 'src/main/java'
+
+    include '**/*.java'
+
+    exclude '**/gen/**'
+
+    def configProps = ['proj.module.dir': projectDir.absolutePath]
+    configProperties configProps
+
+    // empty classpath
+    classpath = files()
+}
+
+check.dependsOn 'checkstyle'
+
+android.libraryVariants.all { variant ->
+    task("javadoc${variant.name}", type: Javadoc) {
+        source = variant.javaCompile.source
+        ext.androidJar = "${android.sdkDirectory}/platforms/${android.compileSdkVersion}/android.jar"
+        classpath = files(variant.javaCompile.classpath.files) + files(ext.androidJar)
+        options.links("http://docs.oracle.com/javase/7/docs/api/")
+        options.linksOffline("http://developer.android.com/reference/", "${android.sdkDirectory}/docs/reference/")
+        options.links("http://facebook.github.io/rebound/javadocs/")
+        exclude '**/BuildConfig.java'
+        exclude '**/R.java'
+    }
+}
+
+// disable insane, build-breaking doclint tool in Java 8
+if (JavaVersion.current().isJava8Compatible()) {
+    tasks.withType(Javadoc) {
+        //noinspection SpellCheckingInspection
+        options.addStringOption('Xdoclint:none', '-quiet')
+    }
+}
+
+apply from: 'https://raw.githubusercontent.com/nuuneoi/JCenter/master/installv1.gradle'
+apply from: 'bintrayv1.gradle'

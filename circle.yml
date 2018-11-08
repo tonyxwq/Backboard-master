@@ -1,0 +1,12 @@
+machine:
+  java:
+    version: oraclejdk8
+
+test:
+  override:
+    - ./gradlew --info check
+
+general:
+  branches:
+    ignore:
+      - gh-pages
